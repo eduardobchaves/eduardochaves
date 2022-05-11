@@ -1,0 +1,150 @@
+/*Create mean by year and site */
+proc sql;
+create table mean_year as
+select
+siteid,
+year(date) as year,
+mean(input(nh4,best.)) as mean_nh4,
+mean(input(ECOLI,best.)) as mean_ECOLI,
+mean(input(PH,best.)) as mean_PH,
+mean(input(DRP,best.)) as mean_DRP,
+mean(input(TN,best.)) as mean_TN,
+mean(input(TON,best.)) as mean_TON,
+mean(input(NO3N,best.)) as mean_NO3N,
+mean(input(DIN,best.)) as mean_DIN,
+mean(input(TP,best.)) as mean_TP,
+mean(input(TURB,best.)) as mean_TURB,
+mean(input(BDISC,best.)) as mean_BDISC
+from group5_otago_tasman_waigato
+group by 1,2
+;quit;
+
+/*Create mean just by year */
+proc sql;
+create table mean_site as
+select
+siteid,
+mean(input(nh4,best.)) as mean_nh4,
+mean(input(ECOLI,best.)) as mean_ECOLI,
+mean(input(PH,best.)) as mean_PH,
+mean(input(DRP,best.)) as mean_DRP,
+mean(input(TN,best.)) as mean_TN,
+mean(input(TON,best.)) as mean_TON,
+mean(input(NO3N,best.)) as mean_NO3N,
+mean(input(DIN,best.)) as mean_DIN,
+mean(input(TP,best.)) as mean_TP,
+mean(input(TURB,best.)) as mean_TURB,
+mean(input(BDISC,best.)) as mean_BDISC
+from group5_otago_tasman_waigato
+group by 1
+;quit;
+
+/*Replace NA for null values to convert to numeric later*/
+proc sql;
+update group5_otago_tasman_waigato
+set nh4=null
+where nh4='NA'
+;quit;
+proc sql;
+update group5_otago_tasman_waigato
+set ECOLI=null
+where ECOLI='NA'
+;quit;
+proc sql;
+update group5_otago_tasman_waigato
+set PH=null
+where PH='NA'
+;quit;
+proc sql;
+update group5_otago_tasman_waigato
+set drp=null
+where drp='NA'
+;quit;
+proc sql;
+update group5_otago_tasman_waigato
+set tn=null
+where tn='NA'
+;quit;
+proc sql;
+update group5_otago_tasman_waigato
+set ton=null
+where ton='NA'
+;quit;
+proc sql;
+update group5_otago_tasman_waigato
+set no3n=null
+where no3n='NA'
+;quit;
+proc sql;
+update group5_otago_tasman_waigato
+set din=null
+where din='NA'
+;quit;
+proc sql;
+update group5_otago_tasman_waigato
+set tp=null
+where tp='NA'
+;quit;
+proc sql;
+update group5_otago_tasman_waigato
+set turb=null
+where turb='NA'
+;quit;
+proc sql;
+update group5_otago_tasman_waigato
+set bdisc=null
+where bdisc='NA'
+;quit;
+
+/*Add mean by year and siteID when value is NULL*/
+proc sql;
+create table data as
+select
+a.siteid,
+a.landcover,
+a.SWQAltitude,
+a.Lat,
+a.Long,
+year(a.date) as year,
+case when nh4 is null then b.mean_nh4 else input(a.nh4,best.) end as nh4,
+case when ECOLI is null then b.mean_ECOLI else input(a.ECOLI,best.) end as ECOLI,
+case when PH is null then b.mean_PH else input(a.PH,best.) end as PH,
+case when DRP is null then b.mean_DRP else input(a.DRP,best.) end as DRP,
+case when TN is null then b.mean_TN else input(a.TN,best.) end as TN,
+case when TON is null then b.mean_TON else input(a.TON,best.) end as TON,
+case when NO3N is null then b.mean_NO3N else input(a.NO3N,best.) end as NO3N,
+case when DIN is null then b.mean_DIN else input(a.DIN,best.) end as DIN,
+case when TP is null then b.mean_TP else input(a.TP,best.) end as TP,
+case when TURB is null then b.mean_TURB else input(a.TURB,best.) end as TURB
+
+from group5_otago_tasman_waigato a
+left join mean_year b on
+year(a.date)=b.year and a.siteid = b.siteid
+;quit;
+
+
+/*Add mean by siteID when value NULL and it wasn't found any value for the year */
+proc sql;
+create table final_data as
+select
+a.siteid,
+a.landcover,
+a.SWQAltitude,
+a.Lat,
+a.Long,
+a.year,
+case when nh4 is null then b.mean_nh4 else nh4 end as nh4,
+case when ECOLI is null then b.mean_ECOLI else ECOLI end as ECOLI,
+case when PH is null then b.mean_PH else PH end as PH,
+case when DRP is null then b.mean_DRP else DRP end as DRP,
+case when TN is null then b.mean_TN else TN end as TN,
+case when TON is null then b.mean_TON else TON end as TON,
+case when NO3N is null then b.mean_NO3N else NO3N end as NO3N,
+case when DIN is null then b.mean_DIN else DIN end as DIN,
+case when TP is null then b.mean_TP else TP end as TP,
+case when TURB is null then b.mean_TURB else TURB end as TURB
+
+from data a
+left join mean_site b on
+a.siteid = b.siteid
+;quit;
